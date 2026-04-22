@@ -10,6 +10,10 @@
             color: #ffffff;
             font-family: 'Segoe UI', -apple-system, sans-serif;
             display: flex;
+            background-color: transparent; 
+            color: #ffffff;
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
@@ -22,14 +26,17 @@
             width: 320px;
             height: 320px;
             border-radius: 50%;
-            background-color: #262626;
-            border: 10px solid #3a3a3a;
+            /* 💡 核心改動：微透明背景 + 毛玻璃模糊濾鏡 */
+            background-color: rgba(38, 38, 38, 0.4); 
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 10px solid rgba(255, 255, 255, 0.1);
             position: relative;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             display: flex;
             justify-content: center;
             align-items: center;
-        }
+}
         
         /* 動態狀態外圈 */
         .color-ring {
@@ -48,7 +55,7 @@
             position: absolute;
             width: 260px;
             height: 260px;
-            background-color: #262626;
+            background-color: rgba(38, 38, 38, 0.9);
             border-radius: 50%;
             z-index: 2;
         }
