@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>五鳥占卜鐘 - 最終精確版</title>
+    <title>五鳥占卜鐘 - 全自動校準版</title>
     <style>
         * { box-sizing: border-box; }
         body {
@@ -12,19 +12,14 @@
             display: flex; flex-direction: column; align-items: center;
             min-height: 100vh; margin: 0; padding: 10px;
         }
-        .main-container { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 12px; }
+        .main-container { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; }
         
-        /* 📍 地點與微調面板 */
-        .location-panel {
-            background: rgba(46, 204, 113, 0.05);
-            border: 1px solid #333;
-            padding: 10px; border-radius: 15px;
-            font-size: 11px; text-align: center;
-        }
-        .adjust-box { display: flex; justify-content: center; gap: 10px; margin-top: 5px; }
-        .adjust-box input { 
-            background: #1a1a1a; border: 1px solid #444; color: #2ecc71; 
-            font-size: 11px; width: 60px; text-align: center; border-radius: 5px;
+        /* 📍 自動化資訊顯示 */
+        .auto-info-bar {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            padding: 8px; border-radius: 12px;
+            font-size: 11px; text-align: center; color: #d4af37;
         }
 
         .bird-selector {
@@ -37,30 +32,35 @@
         }
         .bird-btn.active { background: #d4af37; color: #000; font-weight: bold; }
 
+        /* 時鐘本體 */
         .clock {
             width: 75vw; height: 75vw; max-width: 300px; max-height: 300px;
             border-radius: 50%; background: #1e1e1e; border: 8px solid #333;
             position: relative; margin: 10px auto; display: flex; justify-content: center; align-items: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        .color-ring { position: absolute; width: 100%; height: 100%; border-radius: 50%; opacity: 0.3; transition: 1s; }
+        .color-ring { position: absolute; width: 100%; height: 100%; border-radius: 50%; opacity: 0.25; transition: 1s; }
         .inner-face { position: absolute; width: 88%; height: 88%; background: #121212; border-radius: 50%; z-index: 2; }
         
+        /* 數字 */
         .number-wrapper { position: absolute; width: 100%; height: 100%; top: 0; left: 0; display: flex; justify-content: center; z-index: 3; }
         .number { position: absolute; top: 6%; font-size: 14px; color: #555; font-weight: bold; }
         
+        /* 指針 */
         .hand { position: absolute; left: 50%; bottom: 50%; transform-origin: bottom center; z-index: 5; transform: translateX(-50%); }
         .hour-hand { width: 6px; height: 18%; background: #fff; }
         .min-hand { width: 4px; height: 28%; background: #aaa; }
         .sec-hand { width: 2px; height: 35%; background: #e74c3c; transition: transform 0.2s cubic-bezier(0.4, 2.3, 0.6, 1); }
         .center-nut { width: 10px; height: 10px; background: #fff; border-radius: 50%; z-index: 10; position: absolute; }
 
-        .info-panel { background: rgba(30, 30, 30, 0.85); padding: 20px; border-radius: 20px; text-align: center; border: 1px solid #333; width: 100%; }
-        .major-info { font-size: 13px; color: #d4af37; margin-bottom: 5px; font-weight: bold; }
-        .status-badge { display: inline-block; padding: 12px 35px; border-radius: 50px; font-size: clamp(20px, 6vw, 26px); font-weight: bold; margin: 5px 0; transition: 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.4); }
+        /* 資訊面板 */
+        .info-panel { background: rgba(30, 30, 30, 0.9); padding: 20px; border-radius: 20px; text-align: center; border: 1px solid #333; width: 100%; }
+        .major-info { font-size: 12px; color: #d4af37; margin-bottom: 5px; font-weight: bold; }
+        .status-badge { display: inline-block; padding: 12px 35px; border-radius: 50px; font-size: clamp(20px, 6vw, 26px); font-weight: bold; margin: 8px 0; transition: 0.3s; }
         .sub-text { font-size: 11px; color: #888; margin-top: 5px; }
         .advice { font-size: 13px; color: #aaa; background: #1a1a1a; padding: 12px; border-radius: 10px; line-height: 1.5; min-height: 55px; display: flex; align-items: center; justify-content: center; margin-top: 10px; }
-        
+
+        /* 能量波顏色 */
         .status-統治 { background: #d4af37; color: #000; }
         .status-進食 { background: #2ecc71; color: #fff; }
         .status-行走 { background: #3498db; color: #fff; }
@@ -71,15 +71,7 @@
 <body>
 
 <div class="main-container">
-    <!-- 亮點：自動獲取 + 手動微調面板 -->
-    <div class="location-panel">
-        <div id="api-status" style="color: #2ecc71;">📍 正在與天文台同步...</div>
-        <div class="adjust-box">
-            <span>日出: <input type="text" id="manual-sunrise" placeholder="05:29" onchange="applyManualTime()"></span>
-            <span>日落: <input type="text" id="manual-sunset" placeholder="18:22" onchange="applyManualTime()"></span>
-        </div>
-        <div style="margin-top:5px; color:#555;">(輸入時間如 05:29 即可微調校對)</div>
-    </div>
+    <div class="auto-info-bar" id="api-status">正在自動判定月相與同步日出...</div>
 
     <div class="bird-selector">
         <button class="bird-btn" id="btn-0" onclick="setBird(0)">禿鷹</button>
@@ -99,9 +91,9 @@
     </div>
 
     <div class="info-panel">
-        <div id="major-display" class="major-info">正在計算能量...</div>
+        <div id="major-display" class="major-info">計算中...</div>
         <div class="status-badge" id="status-display">--</div>
-        <div id="apahara-detail" class="sub-text"></div>
+        <div id="sub-display" class="sub-text"></div>
         <div id="advice-display" class="advice"></div>
     </div>
 </div>
@@ -109,68 +101,69 @@
 <script>
     const BIRDS = ["禿鷹", "貓頭鷹", "烏鴉", "公雞", "孔雀"];
     const ACTIVITIES = ["進食", "行走", "統治", "睡眠", "死亡"];
-    const WEIGHTS_DAY = { "進食": 32, "行走": 39, "統治": 52, "睡眠": 19, "死亡": 13 };
-    const WEIGHTS_NIGHT = { "進食": 28, "行走": 28, "統治": 22, "睡眠": 22, "死亡": 33 };
+    
+    // 🏆 四套終極權重邏輯
+    const ALL_WEIGHTS = {
+        shukla: {
+            day:   { "統治": 52, "死亡": 13, "行走": 39, "睡眠": 19, "進食": 32 },
+            night: { "統治": 22, "死亡": 33, "行走": 28, "睡眠": 22, "進食": 28 }
+        },
+        krishna: {
+            day:   { "統治": 19, "死亡": 31, "行走": 37, "睡眠": 12, "進食": 50 },
+            night: { "統治": 17, "死亡": 23, "行走": 40, "睡眠": 17, "進食": 40 }
+        }
+    };
+
+    const ADVICE = { "統治": "🌟 大吉：能量巔峰，最適合決策！", "進食": "💪 次吉：能量回補，執行力強。", "行走": "🚶 普通：平穩處理庶務。", "睡眠": "💤 沉靜：宜休息冥想，忌躁進。", "死亡": "⚠️ 沉澱：能量最低，靜心守成。" };
     const COLORS = { "進食": "#2ecc71", "行走": "#3498db", "統治": "#d4af37", "睡眠": "#9b59b6", "死亡": "#e74c3c" };
-    const ADVICE = { "統治": "🌟 大吉：運勢巔峰，決策必勝！", "進食": "💪 次吉：補充能量，執行力強。", "行走": "🚶 普通：能量平穩，宜處庶務。", "睡眠": "💤 沉靜：宜休息冥想，忌急躁。", "死亡": "⚠️ 沉澱：能量最低，靜心守成。" };
 
     let state = {
         bird: 3,
+        paksha: 'shukla', // 自動判斷
         sunrise: null,
         sunset: null,
         isLoaded: false
     };
 
-    function init() {
-        const clockEl = document.getElementById('clock');
-        for (let i = 1; i <= 12; i++) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'number-wrapper';
-            wrapper.style.transform = `rotate(${i * 30}deg)`;
-            const num = document.createElement('div');
-            num.className = 'number';
-            num.innerText = i;
-            num.style.transform = `rotate(-${i * 30}deg)`;
-            wrapper.appendChild(num);
-            clockEl.appendChild(wrapper);
-        }
-        fetchSunTimes();
+    // 🏆 1. 自動判定明暗半月 (精確天文公式)
+    function getPaksha(date) {
+        const jd = (date.getTime() / 86400000) - (date.getTimezoneOffset() / 1440) + 2440587.5;
+        const daysSinceNew = jd - 2451550.1;
+        const newMoons = daysSinceNew / 29.530588853;
+        const cyclePos = (newMoons - Math.floor(newMoons)) * 360;
+        return (cyclePos < 180) ? 'shukla' : 'krishna';
     }
 
-    async function fetchSunTimes() {
-        const taichungLat = 24.14;
-        const taichungLng = 120.67;
+    // 🏆 2. 初始化與 API 同步
+    async function init() {
+        // 刻度
+        for(let i=1; i<=12; i++) {
+            const w = document.createElement('div'); w.className='number-wrapper'; w.style.transform=`rotate(${i*30}deg)`;
+            const n = document.createElement('div'); n.className='number'; n.innerText=i; n.style.transform=`rotate(-${i*30}deg)`;
+            w.appendChild(n); document.getElementById('clock').appendChild(w);
+        }
+
+        // 自動判定半月
+        state.paksha = getPaksha(new Date());
+        
+        // 自動獲取台中天文數據
+        const statusEl = document.getElementById('api-status');
         try {
-            const res = await fetch(`https://api.sunrise-sunset.org/json?lat=${taichungLat}&lng=${taichungLng}&formatted=0`);
+            const res = await fetch(`https://api.sunrise-sunset.org/json?lat=24.14&lng=120.67&formatted=0`);
             const data = await res.json();
             state.sunrise = new Date(data.results.sunrise);
             state.sunset = new Date(data.results.sunset);
-            
-            // 同步顯示到輸入框
-            document.getElementById('manual-sunrise').value = state.sunrise.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
-            document.getElementById('manual-sunset').value = state.sunset.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
-            
             state.isLoaded = true;
-            document.getElementById('api-status').innerText = "✅ 已自動同步台中天文數據";
+            statusEl.innerText = `✅ 台中同步成功：${state.paksha === 'shukla' ? '明半月' : '暗半月'} / 日出 ${state.sunrise.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
             update();
         } catch (e) {
-            document.getElementById('api-status').innerText = "⚠️ API 連接失敗，請手動校對時間";
-            applyManualTime(); // 使用預設輸入
+            statusEl.innerText = "⚠️ API 故障，使用 05:29 預設值";
+            const now = new Date();
+            state.sunrise = new Date(now); state.sunrise.setHours(5, 29, 0);
+            state.sunset = new Date(now); state.sunset.setHours(18, 22, 0);
+            state.isLoaded = true;
+            update();
         }
-    }
-
-    function applyManualTime() {
-        const srVal = document.getElementById('manual-sunrise').value || "05:29";
-        const ssVal = document.getElementById('manual-sunset').value || "18:22";
-        
-        const now = new Date();
-        const [srH, srM] = srVal.split(':').map(Number);
-        const [ssH, ssM] = ssVal.split(':').map(Number);
-        
-        state.sunrise = new Date(now); state.sunrise.setHours(srH, srM, 0);
-        state.sunset = new Date(now); state.sunset.setHours(ssH, ssM, 0);
-        state.isLoaded = true;
-        update();
     }
 
     function setBird(idx) {
@@ -179,46 +172,53 @@
         if(state.isLoaded) update();
     }
 
+    // 🏆 3. 核心運算更新
     function update() {
         if (!state.isLoaded) return;
         const now = new Date();
-        const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
-        const totalSecs = (h * 3600) + (m * 60) + s;
+        const totalSecs = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
 
         // 指針
         document.getElementById('sec-hand').style.transform = `translateX(-50%) rotate(${totalSecs * 6}deg)`;
         document.getElementById('min-hand').style.transform = `translateX(-50%) rotate(${totalSecs * 0.1}deg)`;
         document.getElementById('hour-hand').style.transform = `translateX(-50%) rotate(${totalSecs / 120}deg)`;
 
+        const sunUp = state.sunrise;
+        const sunDown = state.sunset;
+        
         let weekday = now.getDay();
-        if (now < state.sunrise) weekday = (weekday + 6) % 7; 
-        const isNight = (now < state.sunrise || now >= state.sunset);
+        if (now < sunUp) weekday = (weekday + 6) % 7; 
+        const isNight = (now < sunUp || now >= sunDown);
+        const mode = isNight ? 'night' : 'day';
 
+        // 大時段計算
         let yamaIdx, yamaLen, elapsedInYama;
         if (!isNight) {
-            yamaLen = (state.sunset - state.sunrise) / 5;
-            yamaIdx = Math.floor((now - state.sunrise) / yamaLen);
-            elapsedInYama = now - new Date(state.sunrise.getTime() + yamaIdx * yamaLen);
+            yamaLen = (sunDown - sunUp) / 5;
+            yamaIdx = Math.floor((now - sunUp) / yamaLen);
+            elapsedInYama = now - new Date(sunUp.getTime() + yamaIdx * yamaLen);
         } else {
-            let nightStart = (now >= state.sunset) ? state.sunset : new Date(state.sunset).setDate(state.sunset.getDate() - 1);
-            let nextSun = new Date(state.sunrise); if (now >= state.sunset) nextSun.setDate(nextSun.getDate() + 1);
+            let nightStart = (now >= sunDown) ? sunDown : new Date(sunDown).setDate(sunDown.getDate() - 1);
+            let nextSun = new Date(sunUp); if (now >= sunDown) nextSun.setDate(nextSun.getDate() + 1);
             yamaLen = (nextSun - nightStart) / 5;
             yamaIdx = Math.floor((now - nightStart) / yamaLen);
             elapsedInYama = now - new Date(new Date(nightStart).getTime() + yamaIdx * yamaLen);
         }
         yamaIdx = Math.min(Math.max(0, yamaIdx), 4);
 
-        // 🏆 權重計算核心
+        // 確定主導鳥
         const dayMasters = [0, 1, 2, 3, 4, 0, 1];
         const nightMasters = [2, 4, 1, 3, 2, 2, 4];
         const masterIdx = isNight ? nightMasters[weekday] : dayMasters[weekday];
+        
         const majorActIdx = (state.bird - masterIdx + yamaIdx + 12) % 5;
         const majorStatus = ACTIVITIES[majorActIdx];
 
+        // 加權小時段
         let currentStatus = "";
         let cumulativeMs = 0;
-        const weights = isNight ? WEIGHTS_NIGHT : WEIGHTS_DAY;
-        const totalW = isNight ? 133 : 155;
+        const weights = ALL_WEIGHTS[state.paksha][mode];
+        const totalW = Object.values(weights).reduce((a,b) => a+b, 0);
         const msPerW = yamaLen / totalW;
 
         for (let i = 0; i < 5; i++) {
@@ -232,11 +232,11 @@
         if (!currentStatus) currentStatus = ACTIVITIES[(majorActIdx + 4) % 5];
 
         // UI 更新
-        document.getElementById('major-display').innerText = `大時段 (Major)：${majorStatus}`;
+        document.getElementById('major-display').innerText = `大時段主活動：${majorStatus}`;
         const badge = document.getElementById('status-display');
         badge.innerText = currentStatus;
         badge.className = `status-badge status-${currentStatus}`;
-        document.getElementById('apahara-detail').innerText = `小時段：${currentStatus} (${isNight?'夜':'日'}間加權)`;
+        document.getElementById('sub-display').innerText = `目前為 ${state.paksha === 'shukla' ? '明月' : '暗月'} / ${isNight ? '夜間' : '日間'}子時段`;
         document.getElementById('advice-display').innerText = ADVICE[currentStatus];
         document.getElementById('color-ring').style.backgroundColor = COLORS[currentStatus];
     }
